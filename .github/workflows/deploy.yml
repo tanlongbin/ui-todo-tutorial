@@ -32,9 +32,13 @@ jobs:
 
       # TODO: Add a stage for running unit tests
 
+      - name: Run unit test
+        run: npm run test
+
       # TODO: Add a stage for running cypress tests
       - name: Cypress run
         uses: cypress-io/github-action@v2
+          with: npm run start 
 
       # TODO: Add a stage to generate cypress videos and screenshots as artifacts
 
