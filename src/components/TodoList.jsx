@@ -1,19 +1,44 @@
-import React, { useContext } from "react";
-import { Button } from "antd";
+import React, { useContext, useState, useEffect } from "react";
+import { Button, Input } from "antd";
 import { TodoContext } from "../context/TodoContextProvider";
+import { deleteTodo, updateTodo, setTodos } from "../context/todo.actions";
+import { firebaseApi } from "../services/firebaseApi"
 
 const TodoTask = (props) => {
+  const [inputValue, setInputValue] = useState(props.description);
+  const [readMode, setReadMode] = useState(false);
+
   return (
     <div className="todo-task">
-      <div className="todo-task__name" data-cy="todo-task__name">
-        {props.description}
-      </div>
+      {
+        readMode ? (
+          <Input
+            value={inputValue}
+            onChange={({ target: { value } }) => setInputValue(value)}
+        placeholder="Add a TODO"
+        size="large"
+            className="todo-task__name"
+            data-cy="todo-task__name"
+          />
+        ) : (
+          <div className="todo-task__name" data-cy="todo-task__name">
+              {inputValue}
+          </div>
+        )
+      }
       <Button
         type="primary"
         shape="round"
         className="todo-task__button"
         data-cy="todo-task__button-update"
-        onClick={() => {}}
+        onClick={() => {
+          if (readMode) {
+            props.update(props.id, inputValue);
+            setReadMode(false);
+          } else {
+            setReadMode(true);
+          }
+        }}
       >
         Update
       </Button>
@@ -23,6 +48,7 @@ const TodoTask = (props) => {
         className="todo-task__button"
         data-cy="todo-task__button-delete"
         onClick={() => props.delete(props.id)}
+        disabled={readMode}
       >
         Delete
       </Button>
@@ -31,19 +57,25 @@ const TodoTask = (props) => {
 };
 
 export const TodoList = () => {
-  const { state } = useContext(TodoContext);
+  const { state, dispatch } = useContext(TodoContext);
 
-  // useEffect(() => {
-  //   const fetchTodos = async () => {
-  //     const todos = await firebaseApi.fetchTodos();
-  //     dispatch(setTodos(todos));
-  //   }
+  useEffect(() => {
+    const fetchTodos = async () => {
+      const todos = await firebaseApi.fetchTodos();
+      dispatch(setTodos(todos));
+    }
 
-  //   fetchTodos();
-  // }, [dispatch]);
+    fetchTodos();
+  }, [dispatch]);
 
   const handleDeleteTodo = (id) => {
-    // TODO: fill in
+    firebaseApi.deleteTodo(id)
+    dispatch(deleteTodo(id));
+  };
+
+  const handleUpdateTodo = (id, description) => {
+    firebaseApi.updateTodo(id, description)
+    dispatch(updateTodo(id, description));
   };
 
   return (
@@ -53,6 +85,7 @@ export const TodoList = () => {
           key={id}
           description={todo.description}
           delete={handleDeleteTodo}
+          update={ handleUpdateTodo }
           id={id}
         />
       ))}
